@@ -39,7 +39,7 @@ mavenPublishing {
 
     coordinates(
         groupId = "fi.evident.skema",
-        artifactId = "skema-${project.name}",
+        artifactId = "skema",
         version = project.findProperty("projectVersion") as String? ?: "0.1.0-SNAPSHOT"
     )
 
