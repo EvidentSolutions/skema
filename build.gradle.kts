@@ -21,6 +21,7 @@ tasks.test {
 
 kotlin {
     jvmToolchain(21)
+    explicitApi()
 }
 
 val sourcesJar by tasks.registering(Jar::class) {

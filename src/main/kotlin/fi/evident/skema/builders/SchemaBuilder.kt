@@ -3,14 +3,14 @@ package fi.evident.skema.builders
 import fi.evident.skema.model.Schema
 import fi.evident.skema.model.Table
 
-fun schema(init: SchemaBuilder.() -> Unit): Schema =
+public fun schema(init: SchemaBuilder.() -> Unit): Schema =
     SchemaBuilder().apply(init).build()
 
-class SchemaBuilder internal constructor() {
+public class SchemaBuilder internal constructor() {
 
     private val tables = mutableListOf<Table>()
 
-    fun table(
+    public fun table(
         name: String,
         comment: String? = null,
         initialize: TableBuilder.() -> Unit,

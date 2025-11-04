@@ -1,10 +1,10 @@
 package fi.evident.skema.model
 
-data class Schema(
+public data class Schema(
     val tables: List<Table>,
 )
 
-data class Table(
+public data class Table(
     val name: String,
     val primaryKey: PrimaryKey?,
     val columns: List<AnyColumn>,
@@ -14,12 +14,12 @@ data class Table(
     val comment: String?,
 )
 
-sealed class AnyColumn {
-    abstract val name: String
-    abstract val typeLength: Int
+public sealed class AnyColumn {
+    public abstract val name: String
+    public abstract val typeLength: Int
 }
 
-data class Column(
+public data class Column(
     override val name: String,
     val spec: ColumnSpec,
     val nullable: Boolean,
@@ -29,7 +29,7 @@ data class Column(
         get() = spec.type.name.length
 }
 
-data class ComputedColumn(
+public data class ComputedColumn(
     override val name: String,
     val sql: String,
 ) : AnyColumn() {
@@ -37,12 +37,12 @@ data class ComputedColumn(
         get() = 0
 }
 
-sealed class PrimaryKey {
-    class Single(val column: Column) : PrimaryKey()
-    class ForeignKeyRef(val name: String, val fk: ForeignKey) : PrimaryKey()
-    class Composite(val columns: List<String>) : PrimaryKey()
+public sealed class PrimaryKey {
+    internal class Single(val column: Column) : PrimaryKey()
+    internal class ForeignKeyRef(val name: String, val fk: ForeignKey) : PrimaryKey()
+    internal class Composite(val columns: List<String>) : PrimaryKey()
 
-    val columnType: Type
+    internal val columnType: Type
         get() = when (this) {
             is Single -> column.spec.type
             is ForeignKeyRef -> fk.type
@@ -50,13 +50,13 @@ sealed class PrimaryKey {
         }
 }
 
-data class ForeignKey(
+public data class ForeignKey(
     val target: String,
     val type: Type,
     val cascadeDelete: Boolean
 )
 
-data class Index(
+public data class Index(
     val name: String?,
     val columns: List<String>,
     val include: List<String>,
@@ -64,7 +64,7 @@ data class Index(
     val unique: Boolean = false
 )
 
-data class CheckConstraint(
+public data class CheckConstraint(
     val name: String,
     val condition: String,
 )

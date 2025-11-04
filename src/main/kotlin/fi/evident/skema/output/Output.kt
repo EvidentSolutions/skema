@@ -2,20 +2,15 @@ package fi.evident.skema.output
 
 import fi.evident.skema.model.*
 
-interface SchemeCallbacks : NamingStrategy {
-    fun convertName(name: String): String = name
-    fun tableEndHook(name: String): String = ""
-}
-
-fun Schema.dump(
-    callbacks: SchemeCallbacks = object : SchemeCallbacks {},
+public fun Schema.dump(
+    callbacks: SchemaCallbacks = object : SchemaCallbacks {},
     dialect: Dialect,
-) = buildString {
+): String = buildString {
     for (table in tables)
         append(table.dump(callbacks, dialect))
 }
 
-fun Table.dump(callbacks: SchemeCallbacks, dialect: Dialect) = buildString {
+private fun Table.dump(callbacks: SchemaCallbacks, dialect: Dialect) = buildString {
     val table = this@dump
 
     if (table.comment != null)

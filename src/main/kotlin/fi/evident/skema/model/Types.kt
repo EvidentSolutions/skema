@@ -2,42 +2,42 @@ package fi.evident.skema.model
 
 import fi.evident.skema.builders.TableBuilder
 
-fun TableBuilder.sqlType(type: Type) = ColumnSpec(type)
+public fun TableBuilder.sqlType(type: Type): ColumnSpec = ColumnSpec(type)
 
-fun TableBuilder.sqlType(name: String) = sqlType(Type(name))
+public fun TableBuilder.sqlType(name: String): ColumnSpec = sqlType(Type(name))
 
-fun TableBuilder.varchar(length: Int) = sqlType("varchar($length)")
+public fun TableBuilder.varchar(length: Int): ColumnSpec = sqlType("varchar($length)")
 
-fun TableBuilder.varbinary(length: Int) = sqlType("varbinary($length)")
+public fun TableBuilder.varbinary(length: Int): ColumnSpec = sqlType("varbinary($length)")
 
-fun TableBuilder.varbinaryMax() = sqlType("varbinary(max)")
+public fun TableBuilder.varbinaryMax(): ColumnSpec = sqlType("varbinary(max)")
 
-fun TableBuilder.text() = sqlType("varchar(max)")
+public fun TableBuilder.text(): ColumnSpec = sqlType("varchar(max)")
 
-fun TableBuilder.decimal(x: Int, y: Int) = sqlType("decimal($x, $y)")
+public fun TableBuilder.decimal(x: Int, y: Int): ColumnSpec = sqlType("decimal($x, $y)")
 
-fun TableBuilder.time(x: Int) = sqlType("time($x)")
+public fun TableBuilder.time(x: Int): ColumnSpec = sqlType("time($x)")
 
-val TableBuilder.int: ColumnSpec
+public val TableBuilder.int: ColumnSpec
     get() = sqlType("int")
 
-val TableBuilder.bigint: ColumnSpec
+public val TableBuilder.bigint: ColumnSpec
     get() = sqlType("bigint")
 
-val TableBuilder.boolean: ColumnSpec
+public val TableBuilder.boolean: ColumnSpec
     get() = sqlType("bit")
 
-val TableBuilder.date: ColumnSpec
+public val TableBuilder.date: ColumnSpec
     get() = sqlType("date")
 
-val TableBuilder.identity: ColumnSpec
+public val TableBuilder.identity: ColumnSpec
     get() = ColumnSpec(Type("int", identity = true))
 
-val TableBuilder.datetime: ColumnSpec
+public val TableBuilder.datetime: ColumnSpec
     get() = sqlType("datetime")
 
-val TableBuilder.float: ColumnSpec
+public val TableBuilder.float: ColumnSpec
     get() = sqlType("float")
 
-val TableBuilder.uniqueidentifier: ColumnSpec
+public val TableBuilder.uniqueidentifier: ColumnSpec
     get() = sqlType("uniqueidentifier")
