@@ -31,7 +31,7 @@ public val TableBuilder.date: ColumnSpec
     get() = sqlType("date")
 
 public val TableBuilder.identity: ColumnSpec
-    get() = ColumnSpec(Type("int", identity = true))
+    get() = int.copy(identity = true)
 
 public val TableBuilder.datetime: ColumnSpec
     get() = sqlType("datetime")

@@ -16,7 +16,6 @@ public data class Table(
 
 public sealed class AnyColumn {
     public abstract val name: String
-    public abstract val typeLength: Int
 }
 
 public data class Column(
@@ -24,18 +23,12 @@ public data class Column(
     val spec: ColumnSpec,
     val nullable: Boolean,
     val foreignKey: ForeignKey?,
-) : AnyColumn() {
-    override val typeLength: Int
-        get() = spec.type.name.length
-}
+) : AnyColumn()
 
 public data class ComputedColumn(
     override val name: String,
     val sql: String,
-) : AnyColumn() {
-    override val typeLength: Int
-        get() = 0
-}
+) : AnyColumn()
 
 public sealed class PrimaryKey {
     internal class Single(val column: Column) : PrimaryKey()
