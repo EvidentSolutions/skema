@@ -2,13 +2,47 @@ package fi.evident.skema.output
 
 internal class DdlWriter(val dialect: Dialect) {
     private val ddl = StringBuilder()
+    private var indent = 0
+    private var atStartOfLine = true
 
     fun append(str: String) {
+        if (str.isEmpty()) return
+
+        if (atStartOfLine)
+            ddl.append("    ".repeat(indent))
+
         ddl.append(str)
+        atStartOfLine = str.endsWith("\n")
     }
 
-    fun appendLine(str: String = "") {
-        ddl.appendLine(str)
+    fun indent(block: () -> Unit) {
+        if (!atStartOfLine)
+            appendLine()
+        indent++
+        block()
+        indent--
+    }
+
+    fun appendLine(str: String) {
+        append(str)
+        appendLine()
+    }
+
+    fun appendIndentedLine(str: String) {
+        indent {
+            append(str)
+            appendLine()
+        }
+    }
+
+    fun appendIndented(str: String) {
+        indent {
+            append(str)
+        }
+    }
+
+    fun appendLine() {
+        append("\n")
     }
 
     fun endStatement() {
