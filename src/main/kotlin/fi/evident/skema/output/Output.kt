@@ -44,6 +44,15 @@ private fun DdlWriter.createTable(table: Table, namingStrategy: NamingStrategy) 
             append(pk.spec.type.name)
             if (pk.spec.identity)
                 append(" identity")
+
+            val constraintName = namingStrategy.primaryKeyConstraintName(table, listOf(pk.name))
+            if (constraintName.isNotEmpty()) {
+                appendLine()
+                append(indent)
+                append(indent)
+                append("constraint $constraintName")
+            }
+
             append(" primary key")
             appendLine(",")
         }
@@ -53,15 +62,24 @@ private fun DdlWriter.createTable(table: Table, namingStrategy: NamingStrategy) 
             append(primaryKey.name)
             append(" ")
             append(primaryKey.fk.type.name)
+
+            val pkConstraintName = namingStrategy.primaryKeyConstraintName(table, listOf(primaryKey.name))
+            if (pkConstraintName.isNotEmpty()) {
+                appendLine()
+                append(indent)
+                append(indent)
+                append("constraint $pkConstraintName")
+            }
+
             append(" primary key")
 
             appendLine()
             append(indent)
             append(indent)
 
-            val constraintName = namingStrategy.foreignKeyName(table, primaryKey.fk.target, primaryKey.name)
-            if (constraintName.isNotEmpty())
-                append("constraint $constraintName references ${primaryKey.fk.target}")
+            val fkConstraintName = namingStrategy.foreignKeyConstraintName(table, primaryKey.fk.target, primaryKey.name)
+            if (fkConstraintName.isNotEmpty())
+                append("constraint $fkConstraintName references ${primaryKey.fk.target}")
             else
                 append("references ${primaryKey.fk.target}")
 
@@ -92,16 +110,20 @@ private fun DdlWriter.createTable(table: Table, namingStrategy: NamingStrategy) 
                 for (constraint in column.spec.constraints) {
                     when (constraint) {
                         is ColumnConstraint.Default -> {
-                            // TODO: create name for default constraints automatically if unspecified
-                            if (constraint.name != null)
-                                append(" constraint ${constraint.name}")
+                            val constraintName = namingStrategy.defaultConstraintName(table, column.name)
+                            if (constraintName.isNotEmpty()) {
+                                appendLine()
+                                append(indent)
+                                append(indent)
+                                append("constraint $constraintName")
+                            }
                             append(" default ${constraint.constraint}")
                         }
                     }
                 }
 
                 if (column.spec.unique) {
-                    val constraintName = namingStrategy.uniqueColumnConstraintName(table, column.name)
+                    val constraintName = namingStrategy.uniqueConstraintName(table, listOf(column.name))
                     if (constraintName.isNotEmpty()) {
                         appendLine()
                         append(indent)
@@ -117,7 +139,7 @@ private fun DdlWriter.createTable(table: Table, namingStrategy: NamingStrategy) 
                     append(indent)
                     append(indent)
 
-                    val constraintName = namingStrategy.foreignKeyName(table, fk.target, column.name)
+                    val constraintName = namingStrategy.foreignKeyConstraintName(table, fk.target, column.name)
                     if (constraintName.isNotEmpty())
                         append("constraint $constraintName ")
 
@@ -143,13 +165,21 @@ private fun DdlWriter.createTable(table: Table, namingStrategy: NamingStrategy) 
     }
 
     if (table.primaryKey is PrimaryKey.Composite) {
-        // TODO: names
-        appendLine("    primary key (${table.primaryKey.columns.joinToString(", ")}),")
+        append(indent)
+        val constraintName = namingStrategy.primaryKeyConstraintName(table, table.primaryKey.columns)
+        if (constraintName.isNotEmpty())
+            append("constraint $constraintName ")
+        appendLine("primary key (${table.primaryKey.columns.joinToString(", ")}),")
     }
 
     for (unique in table.uniques) {
-        // TODO: names
-        appendLine("    unique (${unique.joinToString(", ")}),")
+        val constraintName = namingStrategy.uniqueConstraintName(table, unique)
+        if (constraintName.isNotEmpty()) {
+            appendLine("    constraint $constraintName")
+            appendLine("        unique (${unique.joinToString(", ")}),")
+        } else {
+            appendLine("    unique (${unique.joinToString(", ")}),")
+        }
     }
 
     for (check in table.checkConstraints) {

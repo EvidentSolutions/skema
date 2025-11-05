@@ -1,16 +1,16 @@
 package fi.evident.skema.model
 
-public data class ColumnSpec(
+@ConsistentCopyVisibility
+public data class ColumnSpec internal constructor(
     val type: Type,
-    var unique: Boolean = false,
-    val comment: String? = null,
-    val identity: Boolean = false,
-    val constraints: List<ColumnConstraint> = emptyList(),
+    internal var unique: Boolean = false,
+    internal val comment: String? = null,
+    internal val identity: Boolean = false,
+    internal val constraints: List<ColumnConstraint> = emptyList(),
 )
 
-public sealed class ColumnConstraint {
-
-    public data class Default(val constraint: String, val name: String? = null) : ColumnConstraint()
+internal sealed class ColumnConstraint {
+    data class Default(val constraint: String) : ColumnConstraint()
 }
 
 public data class Type(

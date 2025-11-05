@@ -1,6 +1,7 @@
 package fi.evident.skema.builders
 
 import fi.evident.skema.model.*
+import fi.evident.skema.model.ColumnSpec
 
 public sealed class AnyColumnBuilder {
     internal abstract fun build(): AnyColumn
@@ -16,11 +17,7 @@ public class ColumnBuilder(
     override fun build() = Column(name, spec, nullable, foreignKey)
 
     public infix fun default(expression: String) {
-        constraint(ColumnConstraint.Default(expression))
-    }
-
-    public infix fun constraint(constraint: ColumnConstraint) {
-        spec = spec.copy(constraints = spec.constraints + constraint)
+        spec = spec.copy(constraints = spec.constraints + ColumnConstraint.Default(expression))
     }
 
     public infix fun comment(comment: String) {
