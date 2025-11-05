@@ -2,12 +2,12 @@ package fi.evident.skema.output
 
 import fi.evident.skema.model.Index
 
-public interface Dialect {
+internal interface Dialect {
 
-    public val statementSeparator: String
-        get() = "\ngo\n\n"
+    val statementSeparator: String
+        get() = ";"
 
-    public fun writeIndex(name: String, tableName: String, index: Index): String = buildString {
+    fun writeIndex(name: String, tableName: String, index: Index): String = buildString {
         append("create ")
 
         if (index.unique)
@@ -24,4 +24,6 @@ public interface Dialect {
     }
 }
 
-public class SqlServerDialect: Dialect
+internal object SqlServerDialect: Dialect {
+    override val statementSeparator: String = "\ngo"
+}
