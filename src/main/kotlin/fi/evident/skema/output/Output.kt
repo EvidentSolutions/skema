@@ -119,8 +119,6 @@ private fun Table.dump(callbacks: SchemaCallbacks, dialect: Dialect) = buildStri
         appendLine("        check (${check.condition}),")
     }
 
-    append(callbacks.tableEndHook(table.name))
-
     appendLine(")")
     append(dialect.statementSeparator)
 
