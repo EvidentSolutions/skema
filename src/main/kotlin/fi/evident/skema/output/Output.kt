@@ -15,7 +15,7 @@ private fun DdlWriter.generateSqlForTable(table: Table, namingStrategy: NamingSt
 
     createTable(table, namingStrategy)
 
-    for (index in table.indices)
+    for (index in table.indices) {
         createIndex(
             name = namingStrategy.indexName(table, index),
             tableName = table.name,
@@ -24,6 +24,7 @@ private fun DdlWriter.generateSqlForTable(table: Table, namingStrategy: NamingSt
             where = index.where,
             unique = index.unique
         )
+    }
 }
 
 private fun DdlWriter.createTable(table: Table, namingStrategy: NamingStrategy) {
@@ -176,5 +177,6 @@ private fun DdlWriter.createIndex(
         append("    where $where")
     }
 
+    appendLine()
     endStatement()
 }
