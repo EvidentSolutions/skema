@@ -1,6 +1,8 @@
 package fi.evident.skema.output
 
-internal class DdlWriter(val dialect: Dialect) {
+import fi.evident.skema.model.Type
+
+internal class DdlWriter(val dialect: Dialect, val namingStrategy: NamingStrategy) {
     private val ddl = StringBuilder()
     private var indent = 0
     private var atStartOfLine = true
@@ -34,6 +36,19 @@ internal class DdlWriter(val dialect: Dialect) {
         }
     }
 
+    fun appendIdentifier(identifier: String) {
+        append(dialect.quoteIdentifier(identifier))
+    }
+
+    fun appendType(type: Type) {
+        append(dialect.quoteIdentifier(type.name))
+        if (type.dimensions.isNotEmpty()) {
+            append("(")
+            append(type.dimensions.joinToString(", "))
+            append(")")
+        }
+    }
+
     fun appendLine() {
         append("\n")
     }
@@ -46,10 +61,6 @@ internal class DdlWriter(val dialect: Dialect) {
 
     fun lineComment(comment: String) {
         appendLine("-- $comment")
-    }
-
-    fun appendColumnList(columns: List<String>) {
-        append(columns.joinToString(", ", "(", ")"))
     }
 
     override fun toString() = ddl.toString()

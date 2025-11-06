@@ -2,37 +2,32 @@ package fi.evident.skema.output
 
 import fi.evident.skema.model.*
 
-public fun Schema.generateSql(
-    namingStrategy: NamingStrategy = DefaultNamingStrategy,
-): String = DdlWriter(SqlServerDialect).apply {
+public fun Schema.generateSql(namingStrategy: NamingStrategy = DefaultNamingStrategy): String {
+    val writer = DdlWriter(SqlServerDialect, namingStrategy)
     for (table in tables)
-        generateSqlForTable(table, namingStrategy)
-}.toString()
+        writer.generateSqlForTable(table)
 
-private fun DdlWriter.generateSqlForTable(table: Table, namingStrategy: NamingStrategy) {
+    return writer.toString()
+}
+
+private fun DdlWriter.generateSqlForTable(table: Table) {
     if (table.comment != null)
         lineComment(table.comment)
 
-    createTable(table, namingStrategy)
+    renderTable(table)
 
-    for (index in table.indices) {
-        createIndex(
-            name = namingStrategy.indexName(table, index),
-            tableName = table.name,
-            columns = index.columns,
-            include = index.include,
-            where = index.where,
-            unique = index.unique
-        )
-    }
+    for (index in table.indices)
+        renderIndex(table, index)
 }
 
-private fun DdlWriter.createTable(table: Table, namingStrategy: NamingStrategy) {
-    appendLine("create table ${table.name}")
+private fun DdlWriter.renderTable(table: Table) {
+    append("create table ")
+    appendIdentifier(table.name)
+    appendLine()
     appendLine("(")
     indent {
         for ((i, decl) in table.tableDeclarations().withIndex()) {
-            renderDeclaration(table, decl, namingStrategy)
+            renderTableDeclaration(table, decl)
 
             if (dialect.supportsTrailingCommas || i != table.columns.lastIndex)
                 append(",")
@@ -44,150 +39,206 @@ private fun DdlWriter.createTable(table: Table, namingStrategy: NamingStrategy) 
     endStatement()
 }
 
-private fun DdlWriter.renderDeclaration(table: Table, declaration: TableDeclaration, namingStrategy: NamingStrategy) {
-    when (declaration) {
-        is TableDeclaration.SinglePrimaryKey -> {
-            val pk = declaration.primaryKey.column
+private fun DdlWriter.renderTableDeclaration(table: Table, decl: TableDeclaration) {
+    when (decl) {
+        is TableDeclaration.SinglePrimaryKey -> renderSinglePrimaryKey(table, decl)
+        is TableDeclaration.ForeignKeyPrimaryKey -> renderForeignKeyPrimaryKey(table, decl)
+        is TableDeclaration.CompositePrimaryKey -> renderCompositePrimaryKey(table, decl)
+        is TableDeclaration.ColumnDef -> renderColumn(table, decl)
+        is TableDeclaration.ComputedColumnDef -> renderComputedColumn(decl)
+        is TableDeclaration.UniqueDef -> renderUniqueConstraint(table, decl)
+        is TableDeclaration.CheckDef -> renderCheckConstraint(decl)
+    }
+}
 
-            append(pk.name)
-            append(" ")
-            append(pk.spec.type.name)
+private fun DdlWriter.renderCheckConstraint(decl: TableDeclaration.CheckDef) {
+    val check = decl.check
+    append("constraint ")
+    appendIdentifier(check.name)
+    appendLine()
+    appendIndented("check (${check.condition})")
+}
 
-            if (pk.spec.identity)
-                append(" identity")
-
-            val constraintName = namingStrategy.primaryKeyConstraintName(table, listOf(pk.name))
-            if (constraintName.isNotEmpty()) {
-                appendIndented("constraint $constraintName primary key")
-            } else {
-                append(" primary key")
-            }
+private fun DdlWriter.renderUniqueConstraint(table: Table, decl: TableDeclaration.UniqueDef) {
+    val unique = decl.columns
+    val constraintName = namingStrategy.uniqueConstraintName(table, unique)
+    if (constraintName.isNotEmpty()) {
+        append("constraint ")
+        appendIdentifier(constraintName)
+        indent {
+            append("unique ")
+            renderColumnList(unique)
         }
-        is TableDeclaration.ForeignKeyPrimaryKey -> {
-            val pk = declaration.primaryKey
+    } else {
+        append("unique ")
+        renderColumnList(unique)
+    }
+}
 
-            append(pk.name)
-            append(" ")
-            append(pk.fk.type.name)
+private fun DdlWriter.renderComputedColumn(decl: TableDeclaration.ComputedColumnDef) {
+    append(dialect.computedColumn(decl.column))
+}
 
-            val pkConstraintName = namingStrategy.primaryKeyConstraintName(table, listOf(pk.name))
-            if (pkConstraintName.isNotEmpty()) {
-                appendIndented("constraint $pkConstraintName primary key")
-            } else {
-                append(" primary key")
-            }
+private fun DdlWriter.renderColumn(table: Table, decl: TableDeclaration.ColumnDef) {
+    val column = decl.column
+    appendIdentifier(column.name)
+    append(" ")
+    appendType(column.spec.type)
 
-            val fkConstraintName =
-                namingStrategy.foreignKeyConstraintName(table, pk.fk.target, pk.name)
-            if (fkConstraintName.isNotEmpty())
-                appendIndented("constraint $fkConstraintName references ${pk.fk.target}")
-            else
-                appendIndented("references ${pk.fk.target}")
-        }
-        is TableDeclaration.CompositePrimaryKey -> {
-            val pk = declaration.primaryKey
-            val constraintName = namingStrategy.primaryKeyConstraintName(table, pk.columns)
-            val pkDefinition = pk.columns.joinToString(", ", "(", ")")
+    if (!column.nullable)
+        append(" not null")
 
-            if (constraintName.isNotEmpty()) {
-                append("constraint $constraintName ")
-                appendIndented("primary key $pkDefinition")
-            } else {
-                append("primary key $pkDefinition")
-            }
-        }
-        is TableDeclaration.ColumnDef -> {
-            val column = declaration.column
-            append(column.name)
-            append(" ")
-            append(column.spec.type.name)
-
-            if (!column.nullable)
-                append(" not null")
-
-            for (constraint in column.spec.constraints) {
-                when (constraint) {
-                    is ColumnConstraint.Default -> {
-                        val constraintName = namingStrategy.defaultConstraintName(table, column.name)
-                        if (constraintName.isNotEmpty())
-                            appendIndented("constraint $constraintName default ${constraint.constraint}")
-                        else
-                            append(" default ${constraint.constraint}")
+    for (constraint in column.spec.constraints) {
+        when (constraint) {
+            is ColumnConstraint.Default -> {
+                val constraintName = namingStrategy.defaultConstraintName(table, column.name)
+                if (constraintName.isNotEmpty())
+                    indent {
+                        append("constraint ")
+                        appendIdentifier(constraintName)
+                        append(" default ${constraint.constraint}")
                     }
-                }
-            }
-
-            if (column.spec.unique) {
-                val constraintName = namingStrategy.uniqueConstraintName(table, listOf(column.name))
-                if (constraintName.isNotEmpty()) {
-                    appendIndented("constraint $constraintName unique")
-                } else
-                    append(" unique")
-            }
-
-            val fk = column.foreignKey
-            if (fk != null) {
-                indent {
-                    val constraintName = namingStrategy.foreignKeyConstraintName(table, fk.target, column.name)
-                    if (constraintName.isNotEmpty())
-                        append("constraint $constraintName ")
-
-                    append("references ${fk.target}")
-
-                    if (fk.cascadeDelete)
-                        append(" on delete cascade")
-                }
+                else
+                    append(" default ${constraint.constraint}")
             }
         }
-        is TableDeclaration.ComputedColumnDef -> {
-            val column = declaration.column
-            append(dialect.computedColumn(column))
-        }
-        is TableDeclaration.UniqueDef -> {
-            val unique = declaration.columns
-            val constraintName = namingStrategy.uniqueConstraintName(table, unique)
+    }
+
+    if (column.spec.unique) {
+        val constraintName = namingStrategy.uniqueConstraintName(table, listOf(column.name))
+        if (constraintName.isNotEmpty()) {
+            indent {
+                append("constraint ")
+                appendIdentifier(constraintName)
+                append(" unique")
+            }
+        } else
+            append(" unique")
+    }
+
+    val fk = column.foreignKey
+    if (fk != null) {
+        indent {
+            val constraintName = namingStrategy.foreignKeyConstraintName(table, fk.target, column.name)
             if (constraintName.isNotEmpty()) {
-                appendLine("constraint $constraintName")
-                appendIndented("unique (${unique.joinToString(", ")})")
-            } else {
-                append("unique (${unique.joinToString(", ")})")
+                append("constraint ")
+                appendIdentifier(constraintName)
+                append(" ")
             }
-        }
-        is TableDeclaration.CheckDef -> {
-            val check = declaration.check
-            appendLine("constraint ${check.name}")
-            appendIndented("check (${check.condition})")
+
+            append("references ")
+            appendIdentifier(fk.target)
+
+            if (fk.cascadeDelete)
+                append(" on delete cascade")
         }
     }
 }
 
-private fun DdlWriter.createIndex(
-    name: String,
-    tableName: String,
-    columns: List<String>,
-    include: List<String>,
-    where: String?,
-    unique: Boolean,
-) {
-    val prefix = if (unique) "create unique index" else "create index"
+private fun DdlWriter.renderSinglePrimaryKey(table: Table, decl: TableDeclaration.SinglePrimaryKey) {
+    val pk = decl.primaryKey.column
 
-    appendLine("$prefix $name")
-    indent {
-        append("on $tableName ")
+    appendIdentifier(pk.name)
+    append(" ")
+    appendType(pk.spec.type)
 
-        appendColumnList(columns)
+    if (pk.spec.identity)
+        append(" identity")
 
-        if (include.isNotEmpty()) {
-            append(" include ")
-            appendColumnList(include)
+    val constraintName = namingStrategy.primaryKeyConstraintName(table, listOf(pk.name))
+    if (constraintName.isNotEmpty()) {
+        indent {
+            append("constraint ")
+            appendIdentifier(constraintName)
+            append(" primary key")
         }
-
-        if (where != null) {
-            appendLine()
-            append("where $where")
-        }
-
-        appendLine()
+    } else {
+        append(" primary key")
     }
+}
+
+private fun DdlWriter.renderForeignKeyPrimaryKey(table: Table, decl: TableDeclaration.ForeignKeyPrimaryKey) {
+    val pk = decl.primaryKey
+
+    append(pk.name)
+    append(" ")
+    appendType(pk.fk.type)
+
+    val pkConstraintName = namingStrategy.primaryKeyConstraintName(table, listOf(pk.name))
+    if (pkConstraintName.isNotEmpty()) {
+        indent {
+            append("constraint ")
+            appendIdentifier(pkConstraintName)
+            append(" primary key")
+        }
+    } else {
+        append(" primary key")
+    }
+
+    val fkConstraintName = namingStrategy.foreignKeyConstraintName(table, pk.fk.target, pk.name)
+
+    indent {
+        if (fkConstraintName.isNotEmpty()) {
+            append("constraint ")
+            appendIdentifier(fkConstraintName)
+            append(" ")
+        }
+        append("references ${pk.fk.target}")
+    }
+}
+
+private fun DdlWriter.renderCompositePrimaryKey(table: Table, decl: TableDeclaration.CompositePrimaryKey) {
+    val pk = decl.primaryKey
+    val constraintName = namingStrategy.primaryKeyConstraintName(table, pk.columns)
+
+    if (constraintName.isNotEmpty()) {
+        append("constraint ")
+        appendIdentifier(constraintName)
+        append(" ")
+        indent {
+            append("primary key ")
+            renderColumnList(pk.columns)
+        }
+    } else {
+        append("primary key ")
+        renderColumnList(pk.columns)
+    }
+}
+
+private fun DdlWriter.renderIndex(
+    table: Table,
+    index: Index
+) {
+    append("create ")
+
+    if (index.unique)
+        append("unique ")
+
+    append("index ")
+    appendIdentifier(namingStrategy.indexName(table, index))
+
+    indent {
+        append("on ")
+        appendIdentifier(table.name)
+        append(" ")
+
+        renderColumnList(columns = index.columns)
+
+        if (index.include.isNotEmpty()) {
+            append(" include ")
+            renderColumnList(columns = index.include)
+        }
+
+        if (index.where != null) {
+            appendLine()
+            append("where ${index.where}")
+        }
+    }
+    appendLine()
     endStatement()
 }
+
+private fun DdlWriter.renderColumnList(columns: List<String>) {
+    append(columns.joinToString(", ", "(", ")") { dialect.quoteIdentifier(it) })
+}
+

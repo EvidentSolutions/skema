@@ -1,14 +1,14 @@
 package fi.evident.skema.model
 
 // TODO: consider making the classes implement this directly instead of wrapping them
-internal sealed interface TableDeclaration {
-    data class ColumnDef(val column: Column) : TableDeclaration
-    data class ComputedColumnDef(val column: ComputedColumn) : TableDeclaration
-    data class SinglePrimaryKey(val primaryKey: PrimaryKey.Single) : TableDeclaration
-    data class ForeignKeyPrimaryKey(val primaryKey: PrimaryKey.ForeignKeyRef) : TableDeclaration
-    data class CompositePrimaryKey(val primaryKey: PrimaryKey.Composite) : TableDeclaration
-    data class UniqueDef(val columns: List<String>) : TableDeclaration
-    data class CheckDef(val check: CheckConstraint) : TableDeclaration
+internal sealed class TableDeclaration {
+    data class ColumnDef(val column: Column) : TableDeclaration()
+    data class ComputedColumnDef(val column: ComputedColumn) : TableDeclaration()
+    data class SinglePrimaryKey(val primaryKey: PrimaryKey.Single) : TableDeclaration()
+    data class ForeignKeyPrimaryKey(val primaryKey: PrimaryKey.ForeignKeyRef) : TableDeclaration()
+    data class CompositePrimaryKey(val primaryKey: PrimaryKey.Composite) : TableDeclaration()
+    data class UniqueDef(val columns: List<String>) : TableDeclaration()
+    data class CheckDef(val check: CheckConstraint) : TableDeclaration()
 }
 
 internal fun Table.tableDeclarations(): List<TableDeclaration> = buildList {

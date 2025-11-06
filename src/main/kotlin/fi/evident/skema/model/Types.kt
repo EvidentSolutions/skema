@@ -4,19 +4,19 @@ import fi.evident.skema.builders.TableBuilder
 
 public fun TableBuilder.sqlType(type: Type): ColumnSpec = ColumnSpec(type)
 
-public fun TableBuilder.sqlType(name: String): ColumnSpec = sqlType(Type(name))
+public fun TableBuilder.sqlType(name: String, dimensions: List<String> = emptyList()): ColumnSpec = sqlType(Type(name, dimensions))
 
-public fun TableBuilder.varchar(length: Int): ColumnSpec = sqlType("varchar($length)")
+public fun TableBuilder.varchar(length: Int): ColumnSpec = sqlType("varchar", listOf(length.toString()))
 
-public fun TableBuilder.varbinary(length: Int): ColumnSpec = sqlType("varbinary($length)")
+public fun TableBuilder.varbinary(length: Int): ColumnSpec = sqlType("varbinary", listOf(length.toString()))
 
-public fun TableBuilder.varbinaryMax(): ColumnSpec = sqlType("varbinary(max)")
+public fun TableBuilder.varbinaryMax(): ColumnSpec = sqlType("varbinary", listOf("max"))
 
-public fun TableBuilder.text(): ColumnSpec = sqlType("varchar(max)")
+public fun TableBuilder.text(): ColumnSpec = sqlType("varchar", listOf("max"))
 
-public fun TableBuilder.decimal(x: Int, y: Int): ColumnSpec = sqlType("decimal($x, $y)")
+public fun TableBuilder.decimal(x: Int, y: Int): ColumnSpec = sqlType("decimal", listOf(x.toString(), y.toString()))
 
-public fun TableBuilder.time(x: Int): ColumnSpec = sqlType("time($x)")
+public fun TableBuilder.time(x: Int): ColumnSpec = sqlType("time", listOf(x.toString()))
 
 public val TableBuilder.int: ColumnSpec
     get() = sqlType("int")

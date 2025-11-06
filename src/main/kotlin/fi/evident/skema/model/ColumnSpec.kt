@@ -12,8 +12,10 @@ internal sealed class ColumnConstraint {
     data class Default(val constraint: String) : ColumnConstraint()
 }
 
-public data class Type(
+@ConsistentCopyVisibility
+public data class Type internal constructor(
     val name: String,
+    val dimensions: List<String>,
 )
 
 public fun unique(spec: ColumnSpec): ColumnSpec = spec.copy(unique = true)
