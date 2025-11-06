@@ -4,7 +4,6 @@ package fi.evident.skema.model
 public data class ColumnSpec internal constructor(
     val type: Type,
     internal var unique: Boolean = false,
-    internal val comment: String? = null,
     internal val identity: Boolean = false,
     internal val constraints: List<ColumnConstraint> = emptyList(),
 )

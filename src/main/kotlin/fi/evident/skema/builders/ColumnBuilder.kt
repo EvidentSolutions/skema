@@ -19,10 +19,6 @@ public class ColumnBuilder(
     public infix fun default(expression: String) {
         spec = spec.copy(constraints = spec.constraints + ColumnConstraint.Default(expression))
     }
-
-    public infix fun comment(comment: String) {
-        spec = spec.copy(comment = comment)
-    }
 }
 
 internal class ComputedColumnBuilder(private val name: String, private val expression: String) : AnyColumnBuilder() {

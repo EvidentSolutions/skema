@@ -1,29 +1,23 @@
 package fi.evident.skema.output
 
-import fi.evident.skema.model.Index
+import fi.evident.skema.model.ComputedColumn
 
 internal interface Dialect {
 
     val statementSeparator: String
         get() = ";"
 
-    fun writeIndex(name: String, tableName: String, index: Index): String = buildString {
-        append("create ")
+    val supportsTrailingCommas: Boolean
 
-        if (index.unique)
-            append("unique ")
-
-        append("index $name")
-
-        append("\n    on $tableName ").append(index.columns.joinToString(", ", "(", ")"))
-        if (index.include.isNotEmpty())
-            append(" include ").append(index.include.joinToString(", ", "(", ")"))
-
-        if (index.where != null)
-            append("\n    where ").append(index.where)
-    }
+    fun computedColumn(column: ComputedColumn): String
 }
 
 internal object SqlServerDialect: Dialect {
     override val statementSeparator: String = "\ngo"
+
+    override val supportsTrailingCommas: Boolean
+        get() = true
+
+    override fun computedColumn(column: ComputedColumn): String =
+        "${column.name} as ${column.sql}"
 }

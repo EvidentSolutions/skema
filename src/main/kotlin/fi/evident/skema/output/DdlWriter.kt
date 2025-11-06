@@ -28,13 +28,6 @@ internal class DdlWriter(val dialect: Dialect) {
         appendLine()
     }
 
-    fun appendIndentedLine(str: String) {
-        indent {
-            append(str)
-            appendLine()
-        }
-    }
-
     fun appendIndented(str: String) {
         indent {
             append(str)
@@ -46,7 +39,8 @@ internal class DdlWriter(val dialect: Dialect) {
     }
 
     fun endStatement() {
-        appendLine(dialect.statementSeparator)
+        append(dialect.statementSeparator)
+        appendLine()
         appendLine()
     }
 
