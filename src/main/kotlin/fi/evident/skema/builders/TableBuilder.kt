@@ -1,6 +1,7 @@
 package fi.evident.skema.builders
 
 import fi.evident.skema.model.*
+import fi.evident.skema.model.Index
 
 public class TableBuilder(
     public val tableName: String,
@@ -41,12 +42,12 @@ public class TableBuilder(
     public infix fun String.optional(fk: ForeignKey): ColumnBuilder =
         ColumnBuilder(this, ColumnSpec(fk.type), nullable = true, foreignKey = fk).also { columns.add(it) }
 
-    public fun index(name: String?, columns: List<String>, include: List<String> = emptyList(), where: String? = null) {
-        indices.add(Index(name, columns, include, where))
+    public fun index(vararg columns: String, include: List<String> = emptyList(), where: String? = null, name: String? = null) {
+        indices.add(Index(name, columns.asList(), include, where))
     }
 
-    public fun uniqueIndex(name: String?, columns: List<String>, include: List<String> = emptyList(), where: String? = null) {
-        indices.add(Index(name, columns, include, where, unique = true))
+    public fun uniqueIndex(vararg columns: String, include: List<String> = emptyList(), where: String? = null, name: String? = null) {
+        indices.add(Index(name = name, columns = columns.asList(), include = include, where = where, unique = true))
     }
 
     public fun check(name: String, condition: String) {
