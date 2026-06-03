@@ -1,0 +1,31 @@
+product: jvm/lib
+layout: maven-like
+description: Schema definition DSL for Kotlin
+
+settings:
+  jvm:
+    jdk:
+      version: 21
+  kotlin:
+    version: 2.4.0
+    freeCompilerArgs:
+      - -Xreturn-value-checker=full
+      - -Xexplicit-api=strict
+  publishing:
+    enabled: true
+    group: fi.evident.skema
+    artifactId: skema
+    version: 0.0.0-SNAPSHOT
+    mavenCentral:
+      enabled: true
+      publishingMode: manual
+    signArtifacts: true
+    publishSources: true
+    pom:
+      url: https://github.com/EvidentSolutions/skema
+      scm: https://github.com/EvidentSolutions/skema.git
+      developers:
+        - name: Juha Komulainen
+      licenses:
+        - name: MIT
+          url: https://opensource.org/license/mit
