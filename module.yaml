@@ -1,5 +1,4 @@
 product: jvm/lib
-layout: maven-like
 description: Schema definition DSL for Kotlin
 
 settings:
