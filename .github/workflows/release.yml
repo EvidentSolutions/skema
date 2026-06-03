@@ -9,35 +9,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v6
 
-    - name: Extract version
-      id: version
-      run: echo "value=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+    - name: Set version
+      run: |
+        VERSION="${{ github.ref_name }}"
+        VERSION="${VERSION#v}"
+        yq -i ".settings.publishing.version = \"${VERSION}\"" module.yaml
 
-    - name: Set up JDK
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: gradle
+    - name: Build
+      run: ./kotlin build
 
-    - name: Setup gradle
-      uses: gradle/actions/setup-gradle@v4
+    - name: Check
+      run: ./kotlin check
 
-    - name: Build and test with Gradle
-      run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-configuration-cache -PprojectVersion=${{ steps.version.outputs.value }}
+    - name: Publish
+      run: ./kotlin publish mavenCentral
       env:
-        ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
-        ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
-        ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
-        ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
-
-    - name: Upload test reports
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-reports
-        path: |
-          **/build/reports/tests/
-          **/build/test-results/
+        KOTLIN_TOOLCHAIN_MAVENCENTRAL_USERNAME: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALUSERNAME }}
+        KOTLIN_TOOLCHAIN_MAVENCENTRAL_PASSWORD: ${{ secrets.ORG_GRADLE_PROJECT_MAVENCENTRALPASSWORD }}
+        KOTLIN_TOOLCHAIN_SIGNING_KEY: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEY }}
+        KOTLIN_TOOLCHAIN_SIGNING_KEY_PASSPHRASE: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGINMEMORYKEYPASSWORD }}
