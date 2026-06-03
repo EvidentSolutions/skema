@@ -1,6 +1,8 @@
 package fi.evident.skema.output
 
 import fi.evident.skema.model.Type
+import fi.evident.skema.output.dialect.Dialect
+import fi.evident.skema.output.naming.NamingStrategy
 
 internal class DdlWriter(val dialect: Dialect, val namingStrategy: NamingStrategy) {
     private val ddl = StringBuilder()

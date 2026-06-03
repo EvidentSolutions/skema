@@ -1,4 +1,4 @@
-package fi.evident.skema.output
+package fi.evident.skema.output.naming
 
 import fi.evident.skema.model.Index
 import fi.evident.skema.model.Table

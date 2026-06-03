@@ -1,6 +1,9 @@
 package fi.evident.skema.output
 
 import fi.evident.skema.model.*
+import fi.evident.skema.output.dialect.SqlServerDialect
+import fi.evident.skema.output.naming.DefaultNamingStrategy
+import fi.evident.skema.output.naming.NamingStrategy
 
 public fun Schema.generateSql(namingStrategy: NamingStrategy = DefaultNamingStrategy): String {
     val writer = DdlWriter(SqlServerDialect, namingStrategy)
