@@ -10,6 +10,7 @@ public class SchemaBuilder internal constructor() {
 
     private val tables = mutableListOf<Table>()
 
+    @IgnorableReturnValue
     public fun table(
         name: String,
         comment: String? = null,

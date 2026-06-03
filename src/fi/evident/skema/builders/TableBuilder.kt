@@ -26,9 +26,11 @@ public class TableBuilder(
         primaryKey = PrimaryKey.Composite(columns.toList())
     }
 
+    @IgnorableReturnValue
     public infix fun String.required(spec: ColumnSpec): ColumnBuilder =
         ColumnBuilder(this, spec, nullable = false).also { columns.add(it) }
 
+    @IgnorableReturnValue
     public infix fun String.optional(spec: ColumnSpec): ColumnBuilder =
         ColumnBuilder(this, spec, nullable = true).also { columns.add(it) }
 
@@ -36,9 +38,11 @@ public class TableBuilder(
         columns.add(ComputedColumnBuilder(this, sql))
     }
 
+    @IgnorableReturnValue
     public infix fun String.required(fk: ForeignKey): ColumnBuilder =
         ColumnBuilder(this, ColumnSpec(fk.type), nullable = false, foreignKey = fk).also { columns.add(it) }
 
+    @IgnorableReturnValue
     public infix fun String.optional(fk: ForeignKey): ColumnBuilder =
         ColumnBuilder(this, ColumnSpec(fk.type), nullable = true, foreignKey = fk).also { columns.add(it) }
 
