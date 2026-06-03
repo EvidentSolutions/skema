@@ -43,12 +43,7 @@ internal class DdlWriter(val dialect: Dialect, val namingStrategy: NamingStrateg
     }
 
     fun appendType(type: Type) {
-        append(dialect.quoteIdentifier(type.name))
-        if (type.dimensions.isNotEmpty()) {
-            append("(")
-            append(type.dimensions.joinToString(", "))
-            append(")")
-        }
+        append(dialect.encodeType(type))
     }
 
     fun appendLine() {

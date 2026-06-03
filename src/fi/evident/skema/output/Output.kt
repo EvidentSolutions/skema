@@ -145,7 +145,8 @@ private fun DdlWriter.renderSinglePrimaryKey(table: Table, decl: TableDeclaratio
     append(" ")
     appendType(pk.spec.type)
 
-    if (pk.spec.identity)
+    // TODO: we only support generated for primary keys, but it might be useful elsewhere as well
+    if (pk.spec.generated)
         append(" identity")
 
     val constraintName = namingStrategy.primaryKeyConstraintName(table, listOf(pk.name))

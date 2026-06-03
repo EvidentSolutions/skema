@@ -3,6 +3,9 @@ package fi.evident.skema.builders
 import fi.evident.skema.model.*
 import fi.evident.skema.model.Index
 
+/**
+ * Builder for a table.
+ */
 public class TableBuilder(
     public val tableName: String,
     private val comment: String?

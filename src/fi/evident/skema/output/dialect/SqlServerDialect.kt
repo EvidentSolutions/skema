@@ -1,8 +1,9 @@
 package fi.evident.skema.output.dialect
 
 import fi.evident.skema.model.ComputedColumn
+import fi.evident.skema.model.Type
 
-internal object SqlServerDialect: Dialect {
+internal object SqlServerDialect : Dialect {
     override val statementSeparator: String = "\ngo"
 
     override val supportsTrailingCommas: Boolean
@@ -20,6 +21,23 @@ internal object SqlServerDialect: Dialect {
 
     override fun computedColumn(column: ComputedColumn): String =
         "${column.name} as ${column.sql}"
+
+    override fun encodeType(type: Type) = when (type) {
+        is Type.BigInt -> "bigint"
+        is Type.Boolean -> "bit"
+        is Type.Date -> "date"
+        is Type.DateTime -> "datetime"
+        is Type.Decimal -> "decimal(${type.precision}, ${type.scale})"
+        is Type.Float -> "float"
+        is Type.Integer -> "int"
+        is Type.Raw -> type.name
+        is Type.Text -> "varchar(max)"
+        is Type.Time -> if (type.fractionalSecondsPrecision != null) "time(${type.fractionalSecondsPrecision})" else "time"
+        is Type.Uuid -> "uniqueidentifier"
+        is Type.Varbinary -> "varbinary(${type.len})"
+        is Type.VarbinaryMax -> "varbinary(max)"
+        is Type.Varchar -> "varchar(${type.len})"
+    }
 
     private val reservedKeywords = setOf(
         "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "AUTHORIZATION",

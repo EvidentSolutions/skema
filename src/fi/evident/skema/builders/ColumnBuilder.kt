@@ -7,11 +7,11 @@ public sealed class AnyColumnBuilder {
     internal abstract fun build(): AnyColumn
 }
 
-public class ColumnBuilder(
+public class ColumnBuilder internal constructor(
     private val name: String,
     private var spec: ColumnSpec,
     private val nullable: Boolean,
-    private val foreignKey: ForeignKey? = null
+    private val foreignKey: ForeignKey? = null,
 ) : AnyColumnBuilder() {
 
     override fun build() = Column(name, spec, nullable, foreignKey)
@@ -21,6 +21,9 @@ public class ColumnBuilder(
     }
 }
 
-internal class ComputedColumnBuilder(private val name: String, private val expression: String) : AnyColumnBuilder() {
+internal class ComputedColumnBuilder internal constructor(
+    private val name: String,
+    private val expression: String,
+) : AnyColumnBuilder() {
     override fun build() = ComputedColumn(name, expression)
 }
