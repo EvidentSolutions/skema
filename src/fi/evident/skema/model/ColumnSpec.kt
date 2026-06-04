@@ -13,3 +13,13 @@ internal sealed class ColumnConstraint {
 }
 
 public fun unique(spec: ColumnSpec): ColumnSpec = spec.copy(unique = true)
+
+public class NullableColumnSpec internal constructor(internal val spec: ColumnSpec)
+
+public class NullableForeignKey internal constructor(internal val fk: ForeignKey)
+
+public fun nullable(spec: ColumnSpec): NullableColumnSpec =
+    NullableColumnSpec(spec)
+
+public fun nullable(fk: ForeignKey): NullableForeignKey =
+    NullableForeignKey(fk)

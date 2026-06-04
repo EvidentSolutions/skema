@@ -30,6 +30,22 @@ public class TableBuilder(
     }
 
     @IgnorableReturnValue
+    public infix fun String.of(spec: ColumnSpec): ColumnBuilder =
+        required(spec)
+
+    @IgnorableReturnValue
+    public infix fun String.of(spec: NullableColumnSpec): ColumnBuilder =
+        optional(spec.spec)
+
+    @IgnorableReturnValue
+    public infix fun String.of(fk: ForeignKey): ColumnBuilder =
+        required(fk)
+
+    @IgnorableReturnValue
+    public infix fun String.of(fk: NullableForeignKey): ColumnBuilder =
+        optional(fk.fk)
+
+    @IgnorableReturnValue
     public infix fun String.required(spec: ColumnSpec): ColumnBuilder =
         ColumnBuilder(this, spec, nullable = false).also { columns.add(it) }
 
