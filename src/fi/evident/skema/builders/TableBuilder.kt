@@ -6,79 +6,95 @@ import fi.evident.skema.model.Index
 /**
  * Builder for a table.
  */
-public class TableBuilder(
-    public val tableName: String,
+public class TableBuilder internal constructor(
+    public val tableName: TableName,
     private val comment: String?
 ) {
 
     internal var primaryKey: PrimaryKey? = null
     private val columns = mutableListOf<AnyColumnBuilder>()
     private val indices = mutableListOf<Index>()
-    private val checkConstraints = mutableListOf<CheckConstraint>()
-    private val uniques = mutableListOf<List<String>>()
+    private val constraints = mutableListOf<TableConstraint>()
 
     public infix fun String.primaryKey(spec: ColumnSpec) {
-        primaryKey = PrimaryKey.Single(ColumnBuilder(this, spec, nullable = false).build())
+        columns += ColumnBuilder(
+            name = this.toColumnName(),
+            type = spec.type,
+            generated = spec.generated,
+            constraints = listOf(ColumnConstraint.PrimaryKey) + spec.constraints,
+            nullable = false,
+        )
     }
 
-    public infix fun String.primaryKey(fk: ForeignKey) {
-        primaryKey = PrimaryKey.ForeignKeyRef(this, fk)
+    public infix fun String.primaryKey(fk: ColumnConstraint.ForeignKey) {
+        columns += ColumnBuilder(
+            name = this.toColumnName(),
+            type = fk.type,
+            nullable = false,
+            constraints = listOf(ColumnConstraint.PrimaryKey, fk)
+        )
     }
 
     public fun primaryKey(vararg columns: String) {
-        primaryKey = PrimaryKey.Composite(columns.toList())
+        constraints += TableConstraint.PrimaryKey(columns.map(String::toColumnName))
     }
-
-    @IgnorableReturnValue
-    public infix fun String.of(spec: ColumnSpec): ColumnBuilder =
-        required(spec)
-
-    @IgnorableReturnValue
-    public infix fun String.of(spec: NullableColumnSpec): ColumnBuilder =
-        optional(spec.spec)
-
-    @IgnorableReturnValue
-    public infix fun String.of(fk: ForeignKey): ColumnBuilder =
-        required(fk)
-
-    @IgnorableReturnValue
-    public infix fun String.of(fk: NullableForeignKey): ColumnBuilder =
-        optional(fk.fk)
 
     @IgnorableReturnValue
     public infix fun String.required(spec: ColumnSpec): ColumnBuilder =
-        ColumnBuilder(this, spec, nullable = false).also { columns.add(it) }
+        ColumnBuilder(
+            name = this.toColumnName(),
+            type = spec.type,
+            generated = spec.generated,
+            constraints = spec.constraints,
+            nullable = false
+        ).also { columns.add(it) }
 
     @IgnorableReturnValue
     public infix fun String.optional(spec: ColumnSpec): ColumnBuilder =
-        ColumnBuilder(this, spec, nullable = true).also { columns.add(it) }
+        ColumnBuilder(
+            name = this.toColumnName(),
+            type = spec.type,
+            generated = spec.generated,
+            constraints = spec.constraints,
+            nullable = true
+        ).also { columns.add(it) }
 
     public infix fun String.computed(sql: String) {
-        columns.add(ComputedColumnBuilder(this, sql))
+        columns.add(ConstantColumnBuilder(ComputedColumn(this.toColumnName(), sql.toSqlExpression())))
     }
 
     @IgnorableReturnValue
-    public infix fun String.required(fk: ForeignKey): ColumnBuilder =
-        ColumnBuilder(this, ColumnSpec(fk.type), nullable = false, foreignKey = fk).also { columns.add(it) }
+    public infix fun String.required(fk: ColumnConstraint.ForeignKey): ColumnBuilder =
+        ColumnBuilder(name = this.toColumnName(), type = fk.type, nullable = false, constraints = listOf(fk)).also { columns.add(it) }
 
     @IgnorableReturnValue
-    public infix fun String.optional(fk: ForeignKey): ColumnBuilder =
-        ColumnBuilder(this, ColumnSpec(fk.type), nullable = true, foreignKey = fk).also { columns.add(it) }
+    public infix fun String.optional(fk: ColumnConstraint.ForeignKey): ColumnBuilder =
+        ColumnBuilder(name = this.toColumnName(), type = fk.type, nullable = true, constraints = listOf(fk)).also { columns.add(it) }
 
-    public fun index(vararg columns: String, include: List<String> = emptyList(), where: String? = null, name: String? = null) {
-        indices.add(Index(name, columns.asList(), include, where))
+    public fun index(
+        vararg columns: String,
+        include: List<String> = emptyList(),
+        where: String? = null,
+        name: String? = null
+    ) {
+        indices.add(Index(name?.toIndexName(), columns.map(String::toColumnName), include.map(String::toColumnName), where?.toSqlExpression()))
     }
 
-    public fun uniqueIndex(vararg columns: String, include: List<String> = emptyList(), where: String? = null, name: String? = null) {
-        indices.add(Index(name = name, columns = columns.asList(), include = include, where = where, unique = true))
+    public fun uniqueIndex(
+        vararg columns: String,
+        include: List<String> = emptyList(),
+        where: String? = null,
+        name: String? = null
+    ) {
+        indices.add(Index(name?.toIndexName(), columns.map(String::toColumnName), include.map(String::toColumnName), where?.toSqlExpression(), unique = true))
     }
 
     public fun check(name: String, condition: String) {
-        checkConstraints.add(CheckConstraint(name, condition))
+        constraints.add(TableConstraint.Check(name.toConstraintName(), condition.toSqlExpression()))
     }
 
     public fun unique(vararg columns: String) {
-        uniques.add(columns.toList())
+        constraints.add(TableConstraint.Unique(columns.map(String::toColumnName)))
     }
 
     internal fun build() = Table(
@@ -86,8 +102,7 @@ public class TableBuilder(
         primaryKey = primaryKey,
         columns = columns.map { it.build() },
         indices = indices,
-        checkConstraints = checkConstraints,
-        uniques = uniques,
+        constraints = constraints,
         comment = comment,
     )
 }
@@ -96,18 +111,24 @@ public fun foreignKey(
     target: String,
     type: Type,
     cascadeDelete: Boolean = false,
-): ForeignKey = ForeignKey(target, type, cascadeDelete = cascadeDelete)
+): ColumnConstraint.ForeignKey  = foreignKey(target.toTableName(), type, cascadeDelete = cascadeDelete)
 
-public fun foreignKey(target: Table, cascadeDelete: Boolean = false): ForeignKey {
-    val pk = target.primaryKey ?: error("no primary key for table ${target.name}")
+public fun foreignKey(
+    target: TableName,
+    type: Type,
+    cascadeDelete: Boolean = false,
+): ColumnConstraint.ForeignKey  = ColumnConstraint.ForeignKey(target, type, cascadeDelete = cascadeDelete)
+
+public fun foreignKey(target: Table, cascadeDelete: Boolean = false): ColumnConstraint.ForeignKey {
+    val pk = target.primaryKeyColumn ?: error("no primary key for table ${target.name}")
     return foreignKey(
         target = target.name,
-        type = pk.columnType,
+        type = pk.type,
         cascadeDelete = cascadeDelete,
     )
 }
 
-public fun TableBuilder.foreignKeySelf(): ForeignKey {
+public fun TableBuilder.foreignKeySelf(): ColumnConstraint.ForeignKey  {
     val pk = primaryKey ?: error("no primary key for table $tableName")
     return foreignKey(tableName, pk.columnType)
 }

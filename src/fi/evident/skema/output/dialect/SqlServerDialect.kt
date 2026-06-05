@@ -2,6 +2,7 @@ package fi.evident.skema.output.dialect
 
 import fi.evident.skema.model.ComputedColumn
 import fi.evident.skema.model.Type
+import javax.annotation.processing.Generated
 
 internal object SqlServerDialect : Dialect {
     override val statementSeparator: String = "\ngo"
@@ -20,16 +21,16 @@ internal object SqlServerDialect : Dialect {
     }
 
     override fun computedColumn(column: ComputedColumn): String =
-        "${column.name} as ${column.sql}"
+        "${column.name} as ${column.expression}"
 
-    override fun encodeType(type: Type) = when (type) {
+    override fun encodeType(type: Type, generated: Boolean) = when (type) {
         is Type.BigInt -> "bigint"
         is Type.Boolean -> "bit"
         is Type.Date -> "date"
         is Type.DateTime -> "datetime"
         is Type.Decimal -> "decimal(${type.precision}, ${type.scale})"
         is Type.Float -> "float"
-        is Type.Integer -> "int"
+        is Type.Integer -> if (generated) "int identity" else "int"
         is Type.Raw -> type.name
         is Type.Text -> "varchar(max)"
         is Type.Time -> if (type.fractionalSecondsPrecision != null) "time(${type.fractionalSecondsPrecision})" else "time"

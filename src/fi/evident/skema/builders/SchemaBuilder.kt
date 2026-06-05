@@ -2,6 +2,8 @@ package fi.evident.skema.builders
 
 import fi.evident.skema.model.Schema
 import fi.evident.skema.model.Table
+import fi.evident.skema.model.TableName
+import fi.evident.skema.model.toTableName
 
 /**
  * Call the given initializer to build a schema.
@@ -23,9 +25,13 @@ public class SchemaBuilder internal constructor() {
     public fun table(
         name: String,
         comment: String? = null,
-        initialize: TableBuilder.() -> Unit,
+        initialize: context(ColumnSpecContext) TableBuilder.() -> Unit,
     ): Table {
-        val table = TableBuilder(name, comment).apply { initialize() }.build()
+        val table = TableBuilder(name.toTableName(), comment).apply {
+            context(ColumnSpecContext()) {
+                initialize()
+            }
+        }.build()
         tables += table
         return table
     }

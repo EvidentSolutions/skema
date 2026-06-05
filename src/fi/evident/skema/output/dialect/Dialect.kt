@@ -14,5 +14,5 @@ internal interface Dialect {
 
     fun computedColumn(column: ComputedColumn): String
 
-    fun encodeType(type: Type): String
+    fun encodeType(type: Type, generated: Boolean): String
 }
